@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "./src/server.js",
-  "scripts": {},
+  "scripts": {
+    "start": "nodemon ./src/server.js"
+  },
   "author": "bilkn",
   "license": "ISC",
   "dependencies": {

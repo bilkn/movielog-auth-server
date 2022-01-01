@@ -1,11 +1,12 @@
 const { hashSync, compareSync } = require("bcrypt");
 const {
-  createUser,
+  createAccount,
   isEmailExist,
   findUserByEmail,
 } = require("../service/AuthService");
 const { saveRefreshToken } = require("../service/RefreshTokenService");
 const jwt = require("jsonwebtoken");
+const { UserModel } = require("@core/lib");
 
 const createAccessToken = (data) => {
   return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
@@ -17,6 +18,10 @@ const createRefreshToken = (data) => {
   return jwt.sign(data, process.env.REFRESH_TOKEN_PRIVATE_KEY, {
     expiresIn: `${24 * 90}h`,
   });
+};
+
+const createUser = (userID) => {
+  return new UserModel({ id: userID }).save();
 };
 
 async function signUp(req, res) {
@@ -31,8 +36,8 @@ async function signUp(req, res) {
     }
 
     const hashedPassword = hashSync(password, 10);
-    await createUser(email, hashedPassword);
-
+    const { _id } = await createAccount(email, hashedPassword);
+    const user = await createUser(_id);
     const accessToken = createAccessToken({ email });
     const refreshToken = createRefreshToken({ email });
     await saveRefreshToken(refreshToken);

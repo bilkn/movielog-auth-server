@@ -14,9 +14,9 @@ const { UserModel } = require("@core/lib");
 
 const generateAccessToken = (data) => {
   return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
-    expiresIn: "2s",
+    expiresIn: "10s",
   });
-};  
+};
 
 const generateRefreshToken = (data) => {
   return jwt.sign(data, process.env.REFRESH_TOKEN_PRIVATE_KEY, {
@@ -33,7 +33,9 @@ async function generateNewTokens(req, res) {
   if (!refreshToken) return res.sendStatus(401);
   try {
     if (!(await isRefreshTokenExist(refreshToken))) {
-      return res.sendStatus(403);
+      return res
+        .status(403)
+        .send({ message: "Refresh token couldn't be recognized." });
     }
     jwt.verify(
       refreshToken,
@@ -79,7 +81,7 @@ async function signUp(req, res) {
     await res.status(200).json({ accessToken, refreshToken });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: err });
+    res.sendStatus(500);
   }
 }
 
@@ -110,8 +112,23 @@ async function signIn(req, res) {
     res.status(200).send({ accessToken, refreshToken });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: err });
+    res.sendStatus(500);
   }
 }
 
-module.exports = { signUp, signIn, generateNewTokens };
+async function signOut(req, res) {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).send({
+      message: "Token is not provided, please provide refresh token.",
+    });
+  }
+  try {
+    await deleteRefreshToken(token);
+    res.sendStatus(204);
+  } catch (err) {
+    res.send(500);
+  }
+}
+
+module.exports = { signUp, signIn, signOut, generateNewTokens };

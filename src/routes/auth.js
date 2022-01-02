@@ -6,10 +6,12 @@ const {
   signIn,
   signUp,
   generateNewTokens,
+  signOut,
 } = require("../controller/authController");
 
 router.post("/signup", validateValues(signUpSchema), signUp);
 router.post("/signin", validateValues(signInSchema), signIn);
+router.delete("/signout", signOut);
 router.post("/token", generateNewTokens);
 
 module.exports = router;

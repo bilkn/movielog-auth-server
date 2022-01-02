@@ -16,9 +16,9 @@ const PasswordResetRequestSchema = new mongoose.Schema({
   },
 });
 
-const PasswordREsetRequestModel = mongoose.model(
+const PasswordResetRequestModel = mongoose.model(
   "PasswordRequest",
   PasswordResetRequestSchema
 );
 
-module.exports = PasswordREsetRequestModel;
+module.exports = PasswordResetRequestModel;

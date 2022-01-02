@@ -9,7 +9,12 @@ function getResetRequest(id) {
   return PasswordResetRequestModel.findOne({ id });
 }
 
+function deleteResetRequest(id) {
+  return PasswordResetRequestModel.deleteOne({ id });
+}
+
 module.exports = {
   createPasswordResetRequest,
   getResetRequest,
+  deleteResetRequest,
 };

@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { signInSchema, signUpSchema } = require("../validations/authValidation");
+const {
+  signInSchema,
+  signUpSchema,
+  resetPasswordSchema,
+} = require("../validations/authValidation");
 const validateValues = require("@core/lib/middleware/validationMiddleware");
 const {
   signIn,
@@ -19,7 +23,11 @@ router.delete("/signout", signOut);
 
 router.post("/forgot-password", forgotPassword);
 
-router.patch("/reset-password", resetPassword);
+router.patch(
+  "/reset-password",
+  validateValues(resetPasswordSchema),
+  resetPassword
+);
 
 router.post("/token", generateNewTokens);
 

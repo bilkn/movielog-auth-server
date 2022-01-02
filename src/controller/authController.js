@@ -13,6 +13,7 @@ const {
 const {
   createPasswordResetRequest,
   getResetRequest,
+  deleteResetRequest,
 } = require("../service/PasswordResetService");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("@core/lib");
@@ -141,12 +142,20 @@ async function signOut(req, res) {
 
 async function resetPassword(req, res) {
   const { id, password } = req.body;
+  let sent;
   if (!id)
     return res.status(400).send({
       message: "Reset request id is not provided, please provide request id.",
     });
   try {
     const resetRequest = await getResetRequest(id);
+
+    if (!resetRequest) {
+      return res
+        .status(404)
+        .send({ message: "Reset request could not be found." });
+    }
+
     const { email } = resetRequest;
 
     const user = await findUserByEmail(email);
@@ -162,8 +171,11 @@ async function resetPassword(req, res) {
     res
       .status(200)
       .send({ success: true, message: "Password is changed successfully." });
+    sent = true;
+
+    await deleteResetRequest(id);
   } catch (err) {
-    res.sendStatus(500);
+    if (!sent) res.sendStatus(500);
     console.log(err);
   }
 }

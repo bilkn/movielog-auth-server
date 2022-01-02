@@ -1,4 +1,5 @@
 const { hashSync, compareSync } = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 const {
   createAccount,
   isEmailExist,
@@ -9,8 +10,12 @@ const {
   isRefreshTokenExist,
   deleteRefreshToken,
 } = require("../service/RefreshTokenService");
+const {
+  createPasswordResetRequest,
+} = require("../service/PasswordResetService");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("@core/lib");
+const { sendPasswordResetLink } = require("../utils");
 
 const generateAccessToken = (data) => {
   return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
@@ -131,4 +136,33 @@ async function signOut(req, res) {
   }
 }
 
-module.exports = { signUp, signIn, signOut, generateNewTokens };
+async function forgotPassword(req, res) {
+  const { email } = req.body;
+  try {
+    const user = await findUserByEmail(email);
+    if (!email)
+      return res
+        .status(400)
+        .send({ message: "Email is not provided, please provide email." });
+    if (!user)
+      return res
+        .status(404)
+        .send({ success: false, message: "No user is found with this email." });
+    const id = uuidv4();
+    const request = {
+      id,
+      email: user.email,
+    };
+    await createPasswordResetRequest(request);
+    await sendPasswordResetLink(email);
+    res.status(200).send({
+      success: true,
+      message: "Password reset link is sent successfully.",
+      data: { email },
+    });
+  } catch (err) {
+    res.sendStatus(500);
+  }
+}
+
+module.exports = { signUp, signIn, signOut, forgotPassword, generateNewTokens };

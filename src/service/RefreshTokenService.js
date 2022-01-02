@@ -1,6 +1,6 @@
 const RefreshTokenModel = require("../models/RefreshTokenModel");
 
-function saveRefreshToken(token) {
+function createRefreshToken(token) {
   const refreshToken = new RefreshTokenModel({ token });
   return refreshToken.save();
 }
@@ -14,4 +14,4 @@ function isRefreshTokenExist(token) {
 }
 
 
-module.exports = { saveRefreshToken, deleteRefreshToken, isRefreshTokenExist };
+module.exports = { createRefreshToken, deleteRefreshToken, isRefreshTokenExist };

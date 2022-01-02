@@ -5,6 +5,11 @@ function createPasswordResetRequest(request) {
   return passwordResetRequest.save();
 }
 
+function getResetRequest(id) {
+  return PasswordResetRequestModel.findOne({ id });
+}
+
 module.exports = {
   createPasswordResetRequest,
+  getResetRequest,
 };

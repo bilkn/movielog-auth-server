@@ -1,7 +1,6 @@
 const nodemailer = require("nodemailer");
 
-async function SendPasswordResetLink(email) {
-  // create reusable transporter object using the default SMTP transport
+async function SendPasswordResetLink(email, id) {
   const transporter = nodemailer.createTransport({
     host: "smtp.ethereal.email",
     port: 587,
@@ -11,14 +10,12 @@ async function SendPasswordResetLink(email) {
     },
   });
 
-  // send mail with defined transport object
-  console.log("email: ", email);
   const msg = {
     from: "auth@movielog.com",
     to: email,
     subject: "Reset password",
     text: "",
-    html: "<b>Reset password link is sent.</b>",
+    html: `<b>Password reset id: ${id}</b>` /* !!! Change this to a link. */,
   };
 
   const info = await transporter.sendMail(msg);

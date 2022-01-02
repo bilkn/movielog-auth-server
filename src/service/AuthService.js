@@ -1,6 +1,6 @@
 const UserAuthModel = require("../models/UserAuthModel");
 
-function createAccount(email,username, password) {
+function createAccount(email, username, password) {
   const newUser = new UserAuthModel({ email, username, password });
   return newUser.save();
 }

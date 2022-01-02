@@ -6,12 +6,13 @@ const {
   findUserByEmail,
 } = require("../service/AuthService");
 const {
-  saveRefreshToken,
+  createRefreshToken,
   isRefreshTokenExist,
   deleteRefreshToken,
 } = require("../service/RefreshTokenService");
 const {
   createPasswordResetRequest,
+  getResetRequest,
 } = require("../service/PasswordResetService");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("@core/lib");
@@ -54,12 +55,13 @@ async function generateNewTokens(req, res) {
         const { username } = user;
         const accessToken = generateAccessToken({ username });
         const newRefreshToken = generateRefreshToken({ username });
-        await saveRefreshToken(newRefreshToken);
+        await createRefreshToken(newRefreshToken);
 
         res.status(200).send({ accessToken, refreshToken: newRefreshToken });
       }
     );
   } catch (err) {
+    res.status(500);
     console.log(err);
   }
 }
@@ -81,12 +83,12 @@ async function signUp(req, res) {
 
     const accessToken = generateAccessToken({ username });
     const refreshToken = generateRefreshToken({ username });
-    await saveRefreshToken(refreshToken);
+    await createRefreshToken(refreshToken);
 
     await res.status(200).json({ accessToken, refreshToken });
   } catch (err) {
-    console.log(err);
     res.sendStatus(500);
+    console.log(err);
   }
 }
 
@@ -112,12 +114,12 @@ async function signIn(req, res) {
     const { username } = user;
     const accessToken = generateAccessToken({ username });
     const refreshToken = generateRefreshToken({ username });
-    await saveRefreshToken(refreshToken);
+    await createRefreshToken(refreshToken);
 
     res.status(200).send({ accessToken, refreshToken });
   } catch (err) {
-    console.log(err);
     res.sendStatus(500);
+    console.log(err);
   }
 }
 
@@ -133,6 +135,36 @@ async function signOut(req, res) {
     res.sendStatus(204);
   } catch (err) {
     res.send(500);
+    console.log(err);
+  }
+}
+
+async function resetPassword(req, res) {
+  const { id, password } = req.body;
+  if (!id)
+    return res.status(400).send({
+      message: "Reset request id is not provided, please provide request id.",
+    });
+  try {
+    const resetRequest = await getResetRequest(id);
+    const { email } = resetRequest;
+
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res
+        .status(404)
+        .send({ message: "No user is found with this email." });
+    }
+
+    const hashedPassword = hashSync(password, 10);
+    await user.updatePassword(hashedPassword);
+
+    res
+      .status(200)
+      .send({ success: true, message: "Password is changed successfully." });
+  } catch (err) {
+    res.sendStatus(500);
+    console.log(err);
   }
 }
 
@@ -154,7 +186,7 @@ async function forgotPassword(req, res) {
       email: user.email,
     };
     await createPasswordResetRequest(request);
-    await sendPasswordResetLink(email);
+    await sendPasswordResetLink(email, id);
     res.status(200).send({
       success: true,
       message: "Password reset link is sent successfully.",
@@ -162,7 +194,15 @@ async function forgotPassword(req, res) {
     });
   } catch (err) {
     res.sendStatus(500);
+    console.log(err);
   }
 }
 
-module.exports = { signUp, signIn, signOut, forgotPassword, generateNewTokens };
+module.exports = {
+  signUp,
+  signIn,
+  signOut,
+  forgotPassword,
+  resetPassword,
+  generateNewTokens,
+};

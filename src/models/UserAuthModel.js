@@ -21,6 +21,13 @@ const UserAuthSchema = new mongoose.Schema({
   },
 });
 
+function updatePassword(password) {
+  this.password = password;
+  return this.save();
+}
+
+UserAuthSchema.methods = { updatePassword };
+
 const UserAuthModel = mongoose.model("accounts", UserAuthSchema);
 
 module.exports = UserAuthModel;

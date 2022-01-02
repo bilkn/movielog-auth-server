@@ -8,12 +8,19 @@ const {
   generateNewTokens,
   signOut,
   forgotPassword,
+  resetPassword,
 } = require("../controller/authController");
 
 router.post("/signup", validateValues(signUpSchema), signUp);
+
 router.post("/signin", validateValues(signInSchema), signIn);
+
 router.delete("/signout", signOut);
+
 router.post("/forgot-password", forgotPassword);
+
+router.patch("/reset-password", resetPassword);
+
 router.post("/token", generateNewTokens);
 
 module.exports = router;

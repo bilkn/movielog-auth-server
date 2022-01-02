@@ -5,8 +5,13 @@ function saveRefreshToken(token) {
   return refreshToken.save();
 }
 
-function isRefreshTokenExist(token) {
-  return RefreshTokenModel.exists(token);
+function deleteRefreshToken(token) {
+  return RefreshTokenModel.deleteOne({ token });
 }
 
-module.exports = { saveRefreshToken, isRefreshTokenExist };
+function isRefreshTokenExist(token) {
+  return RefreshTokenModel.exists({ token });
+}
+
+
+module.exports = { saveRefreshToken, deleteRefreshToken, isRefreshTokenExist };

@@ -4,17 +4,21 @@ const {
   isEmailExist,
   findUserByEmail,
 } = require("../service/AuthService");
-const { saveRefreshToken } = require("../service/RefreshTokenService");
+const {
+  saveRefreshToken,
+  isRefreshTokenExist,
+  deleteRefreshToken,
+} = require("../service/RefreshTokenService");
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("@core/lib");
 
-const createAccessToken = (data) => {
+const generateAccessToken = (data) => {
   return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
-    expiresIn: "15m",
+    expiresIn: "2s",
   });
-};
+};  
 
-const createRefreshToken = (data) => {
+const generateRefreshToken = (data) => {
   return jwt.sign(data, process.env.REFRESH_TOKEN_PRIVATE_KEY, {
     expiresIn: `${24 * 90}h`,
   });
@@ -23,6 +27,35 @@ const createRefreshToken = (data) => {
 const createUser = (userID) => {
   return new UserModel({ id: userID }).save();
 };
+
+async function generateNewTokens(req, res) {
+  const { token: refreshToken } = req.body;
+  if (!refreshToken) return res.sendStatus(401);
+  try {
+    if (!(await isRefreshTokenExist(refreshToken))) {
+      return res.sendStatus(403);
+    }
+    jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_PRIVATE_KEY,
+      async (err, user) => {
+        if (err) return res.status(403).send({ success: false, message: err });
+        console.log(user);
+
+        await deleteRefreshToken(refreshToken);
+
+        const { username } = user;
+        const accessToken = generateAccessToken({ username });
+        const newRefreshToken = generateRefreshToken({ username });
+        await saveRefreshToken(newRefreshToken);
+
+        res.status(200).send({ accessToken, refreshToken: newRefreshToken });
+      }
+    );
+  } catch (err) {
+    console.log(err);
+  }
+}
 
 async function signUp(req, res) {
   const { email, password } = req.body;
@@ -34,12 +67,13 @@ async function signUp(req, res) {
         message: "That email address is already in use.",
       });
     }
-
+    const [username] = email.split("@");
     const hashedPassword = hashSync(password, 10);
-    const { _id } = await createAccount(email, hashedPassword);
-    const user = await createUser(_id);
-    const accessToken = createAccessToken({ email });
-    const refreshToken = createRefreshToken({ email });
+    const { _id } = await createAccount(email, username, hashedPassword);
+    await createUser(_id);
+
+    const accessToken = generateAccessToken({ username });
+    const refreshToken = generateRefreshToken({ username });
     await saveRefreshToken(refreshToken);
 
     await res.status(200).json({ accessToken, refreshToken });
@@ -54,7 +88,6 @@ async function signIn(req, res) {
 
   try {
     const user = await findUserByEmail(email);
-
     if (!user) {
       return res.status(403).send({
         success: false,
@@ -69,9 +102,9 @@ async function signIn(req, res) {
           "The email address or password is incorrect, please try again.",
       });
     }
-
-    const accessToken = createAccessToken({ email });
-    const refreshToken = createRefreshToken({ email });
+    const { username } = user;
+    const accessToken = generateAccessToken({ username });
+    const refreshToken = generateRefreshToken({ username });
     await saveRefreshToken(refreshToken);
 
     res.status(200).send({ accessToken, refreshToken });
@@ -81,4 +114,4 @@ async function signIn(req, res) {
   }
 }
 
-module.exports = { signUp, signIn };
+module.exports = { signUp, signIn, generateNewTokens };

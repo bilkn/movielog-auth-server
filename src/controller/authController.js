@@ -15,8 +15,8 @@ const {
   getResetRequest,
   deleteResetRequest,
 } = require("../service/PasswordResetService");
+const { createUser } = require("../service/UserService");
 const jwt = require("jsonwebtoken");
-const { UserModel } = require("@core/lib");
 const { sendPasswordResetLink } = require("../utils");
 
 const generateAccessToken = (data) => {
@@ -29,10 +29,6 @@ const generateRefreshToken = (data) => {
   return jwt.sign(data, process.env.REFRESH_TOKEN_PRIVATE_KEY, {
     expiresIn: `${24 * 90}h`,
   });
-};
-
-const createUser = (userID) => {
-  return new UserModel({ id: userID }).save();
 };
 
 async function generateNewTokens(req, res) {

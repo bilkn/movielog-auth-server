@@ -1,7 +1,7 @@
 const UserAuthModel = require("../models/UserAuthModel");
 
-function createUser(email, password) {
-  const newUser = new UserAuthModel({ email, password });
+function createAccount(email, username, password) {
+  const newUser = new UserAuthModel({ email, username, password });
   return newUser.save();
 }
 
@@ -13,4 +13,4 @@ function findUserByEmail(email) {
   return UserAuthModel.findOne({ email });
 }
 
-module.exports = { createUser, isEmailExist, findUserByEmail };
+module.exports = { createAccount, isEmailExist, findUserByEmail };

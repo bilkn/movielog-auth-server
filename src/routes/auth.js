@@ -4,7 +4,8 @@ const {
   signInSchema,
   signUpSchema,
   resetPasswordSchema,
-} = require("../validations/authValidation");
+  passwordValidationSchema,
+} = require("@core/lib/validations/authValidation");
 const validateValues = require("@core/lib/middleware/validationMiddleware");
 const {
   signIn,
@@ -13,13 +14,22 @@ const {
   signOut,
   forgotPassword,
   resetPassword,
+  deleteUserCredentials,
 } = require("../controller/authController");
+const validateCredentials = require("../middleware/validateCredentials");
 
 router.post("/signup", validateValues(signUpSchema), signUp);
 
 router.post("/signin", validateValues(signInSchema), signIn);
 
 router.delete("/signout", signOut);
+
+router.delete(
+  "/accounts/:id",
+  validateValues(passwordValidationSchema),
+  validateCredentials,
+  deleteUserCredentials
+);
 
 router.post("/forgot-password", forgotPassword);
 

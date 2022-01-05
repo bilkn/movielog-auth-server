@@ -6,6 +6,11 @@ async function main() {
 }
 
 const UserAuthSchema = new mongoose.Schema({
+  id: {
+    type: Number,
+    required: true,
+    default: 1,
+  },
   email: {
     type: String,
     required: true,

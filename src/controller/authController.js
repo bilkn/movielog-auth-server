@@ -4,6 +4,7 @@ const {
   createAccount,
   isEmailExist,
   findUserByEmail,
+  deleteAccount,
 } = require("../service/AuthService");
 const {
   createRefreshToken,
@@ -15,13 +16,13 @@ const {
   getResetRequest,
   deleteResetRequest,
 } = require("../service/PasswordResetService");
-const { createUser } = require("../service/UserService");
+const { createUser } = require("@core/lib/services/UserService");
 const jwt = require("jsonwebtoken");
 const { sendPasswordResetLink } = require("../utils");
 
 const generateAccessToken = (data) => {
   return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
-    expiresIn: "10s",
+    expiresIn: "15m",
   });
 };
 
@@ -45,7 +46,6 @@ async function generateNewTokens(req, res) {
       process.env.REFRESH_TOKEN_PRIVATE_KEY,
       async (err, user) => {
         if (err) return res.status(403).send({ success: false, message: err });
-        console.log(user);
 
         await deleteRefreshToken(refreshToken);
 
@@ -75,8 +75,8 @@ async function signUp(req, res) {
     }
     const [username] = email.split("@");
     const hashedPassword = hashSync(password, 10);
-    const { _id } = await createAccount(email, username, hashedPassword);
-    await createUser(_id);
+    const { id } = await createAccount(email, username, hashedPassword);
+    await createUser(id);
 
     const accessToken = generateAccessToken({ username });
     const refreshToken = generateRefreshToken({ username });
@@ -206,6 +206,19 @@ async function forgotPassword(req, res) {
   }
 }
 
+async function deleteUserCredentials(req, res) {
+  const { id } = req.params;
+  if (!id)
+    return res
+      .status(400)
+      .send({ message: "User id is not provided, please provide user id." });
+  try {
+    await deleteAccount(id);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 module.exports = {
   signUp,
   signIn,
@@ -213,4 +226,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   generateNewTokens,
+  deleteUserCredentials,
 };

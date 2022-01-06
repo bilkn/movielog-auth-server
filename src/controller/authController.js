@@ -49,9 +49,9 @@ async function generateNewTokens(req, res) {
 
         await deleteRefreshToken(refreshToken);
 
-        const { username } = user;
-        const accessToken = generateAccessToken({ username });
-        const newRefreshToken = generateRefreshToken({ username });
+        const { id, username } = user;
+        const accessToken = generateAccessToken({ id, username });
+        const newRefreshToken = generateRefreshToken({ id, username });
         await createRefreshToken(newRefreshToken);
 
         res.status(200).send({ accessToken, refreshToken: newRefreshToken });
@@ -78,8 +78,8 @@ async function signUp(req, res) {
     const { id } = await createAccount(email, username, hashedPassword);
     await createUser(id);
 
-    const accessToken = generateAccessToken({ username });
-    const refreshToken = generateRefreshToken({ username });
+    const accessToken = generateAccessToken({ id, username });
+    const refreshToken = generateRefreshToken({ id, username });
     await createRefreshToken(refreshToken);
 
     await res.status(200).json({ accessToken, refreshToken });
@@ -108,9 +108,9 @@ async function signIn(req, res) {
           "The email address or password is incorrect, please try again.",
       });
     }
-    const { username } = user;
-    const accessToken = generateAccessToken({ username });
-    const refreshToken = generateRefreshToken({ username });
+    const { id, username } = user;
+    const accessToken = generateAccessToken({ id, username });
+    const refreshToken = generateRefreshToken({ id, username });
     await createRefreshToken(refreshToken);
 
     res.status(200).send({ accessToken, refreshToken });
@@ -207,14 +207,18 @@ async function forgotPassword(req, res) {
 }
 
 async function deleteUserCredentials(req, res) {
-  const { id } = req.params;
-  if (!id)
-    return res
-      .status(400)
-      .send({ message: "User id is not provided, please provide user id." });
+  const { refreshToken, id } = req.body;
+
   try {
     await deleteAccount(id);
+    await deleteRefreshToken(refreshToken);
+    res.status(200).send({ success: true });
   } catch (err) {
+    res.status(500).send({
+      success: false,
+      message:
+        "An error occurred while trying to delete account or refresh token.",
+    });
     console.log(err);
   }
 }

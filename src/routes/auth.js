@@ -4,7 +4,7 @@ const {
   signInSchema,
   signUpSchema,
   resetPasswordSchema,
-  passwordValidationSchema,
+  deleteAccountSchema,
 } = require("@core/lib/validations/authValidation");
 const validateValues = require("@core/lib/middleware/validationMiddleware");
 const {
@@ -25,8 +25,8 @@ router.post("/signin", validateValues(signInSchema), signIn);
 router.delete("/signout", signOut);
 
 router.delete(
-  "/accounts/:id",
-  validateValues(passwordValidationSchema),
+  "/accounts",
+  validateValues(deleteAccountSchema),
   validateCredentials,
   deleteUserCredentials
 );

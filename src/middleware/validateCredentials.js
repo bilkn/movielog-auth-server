@@ -20,12 +20,10 @@ async function validateCredentials(req, res, next) {
 
     next();
   } catch (err) {
-    res
-      .status(500)
-      .send({
-        success: false,
-        message: "An error occurred on the auth server.",
-      });
+    res.status(500).send({
+      success: false,
+      message: "An error occurred on the auth server.",
+    });
     console.log(err);
   }
 }

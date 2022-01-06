@@ -16,7 +16,7 @@ function isEmailExist(email) {
 }
 
 function deleteAccount(id) {
-  return UserAuthModel.findByIdAndDelete(id);
+  return UserAuthModel.findOneAndDelete({ id });
 }
 
 function findUserByID(id) {

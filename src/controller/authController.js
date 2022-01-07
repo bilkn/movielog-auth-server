@@ -1,11 +1,12 @@
 const { hashSync, compareSync } = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
+const { createUser } = require("@core/lib/services/UserService");
 const {
   createAccount,
   isEmailExist,
   findUserByEmail,
   deleteAccount,
-} = require("../service/AuthService");
+} = require("@core/lib/services/AuthService");
 const {
   createRefreshToken,
   isRefreshTokenExist,
@@ -16,7 +17,6 @@ const {
   getResetRequest,
   deleteResetRequest,
 } = require("../service/PasswordResetService");
-const { createUser } = require("@core/lib/services/UserService");
 const jwt = require("jsonwebtoken");
 const { sendPasswordResetLink } = require("../utils");
 

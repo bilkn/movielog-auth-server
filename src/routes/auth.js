@@ -6,7 +6,6 @@ const {
   resetPasswordSchema,
   deleteAccountSchema,
 } = require("@core/lib/validations/authValidation");
-const validateValues = require("@core/lib/middleware/validationMiddleware");
 const {
   signIn,
   signUp,
@@ -16,7 +15,10 @@ const {
   resetPassword,
   deleteUserCredentials,
 } = require("../controller/authController");
-const validateCredentials = require("../middleware/validateCredentials");
+const {
+  validateCredentials,
+  validateValues,
+} = require("@core/lib/middleware/");
 
 router.post("/signup", validateValues(signUpSchema), signUp);
 

@@ -2,6 +2,7 @@ const { hashSync, compareSync } = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
 const { createUser } = require("@core/lib/services/UserService");
 const {
+  changePassword: changePasswordFromAuthService,
   createAccount,
   isEmailExist,
   findUserByEmail,
@@ -206,6 +207,22 @@ async function forgotPassword(req, res) {
   }
 }
 
+async function changePassword(req, res) {
+  const { newPassword } = req.body;
+  const { id } = req.user;
+  
+  try {
+    const hashedNewPassword = hashSync(newPassword, 10);
+    await changePasswordFromAuthService(id, hashedNewPassword);
+    return res
+      .status(200)
+      .send({ success: true, message: "Password is changed successfully." });
+  } catch (err) {
+    res.sendStatus(500);
+    console.log(err);
+  }
+}
+
 async function deleteUserCredentials(req, res) {
   const { refreshToken, id } = req.body;
 
@@ -229,6 +246,7 @@ module.exports = {
   signOut,
   forgotPassword,
   resetPassword,
+  changePassword,
   generateNewTokens,
   deleteUserCredentials,
 };

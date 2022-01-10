@@ -4,9 +4,9 @@ const {
   signInSchema,
   signUpSchema,
   resetPasswordSchema,
-  passwordValidationSchema,
+  deleteAccountSchema,
+  changePasswordSchema,
 } = require("@core/lib/validations/authValidation");
-const validateValues = require("@core/lib/middleware/validationMiddleware");
 const {
   signIn,
   signUp,
@@ -14,9 +14,14 @@ const {
   signOut,
   forgotPassword,
   resetPassword,
+  changePassword,
   deleteUserCredentials,
 } = require("../controller/authController");
-const validateCredentials = require("../middleware/validateCredentials");
+const {
+  validateCredentials,
+  validateValues,
+  authenticateToken
+} = require("@core/lib/middleware/");
 
 router.post("/signup", validateValues(signUpSchema), signUp);
 
@@ -25,8 +30,8 @@ router.post("/signin", validateValues(signInSchema), signIn);
 router.delete("/signout", signOut);
 
 router.delete(
-  "/accounts/:id",
-  validateValues(passwordValidationSchema),
+  "/accounts",
+  validateValues(deleteAccountSchema),
   validateCredentials,
   deleteUserCredentials
 );
@@ -37,6 +42,14 @@ router.patch(
   "/reset-password",
   validateValues(resetPasswordSchema),
   resetPassword
+);
+
+router.patch(
+  "/change-password",
+  validateValues(changePasswordSchema),
+  authenticateToken,
+  validateCredentials,
+  changePassword
 );
 
 router.post("/token", generateNewTokens);

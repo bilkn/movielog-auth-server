@@ -1,11 +1,13 @@
 const { hashSync, compareSync } = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
+const { createUser } = require("@core/lib/services/UserService");
 const {
+  changePassword: changePasswordFromAuthService,
   createAccount,
   isEmailExist,
   findUserByEmail,
   deleteAccount,
-} = require("../service/AuthService");
+} = require("@core/lib/services/AuthService");
 const {
   createRefreshToken,
   isRefreshTokenExist,
@@ -16,7 +18,6 @@ const {
   getResetRequest,
   deleteResetRequest,
 } = require("../service/PasswordResetService");
-const { createUser } = require("@core/lib/services/UserService");
 const jwt = require("jsonwebtoken");
 const { sendPasswordResetLink } = require("../utils");
 
@@ -49,9 +50,9 @@ async function generateNewTokens(req, res) {
 
         await deleteRefreshToken(refreshToken);
 
-        const { username } = user;
-        const accessToken = generateAccessToken({ username });
-        const newRefreshToken = generateRefreshToken({ username });
+        const { id, username } = user;
+        const accessToken = generateAccessToken({ id, username });
+        const newRefreshToken = generateRefreshToken({ id, username });
         await createRefreshToken(newRefreshToken);
 
         res.status(200).send({ accessToken, refreshToken: newRefreshToken });
@@ -78,8 +79,8 @@ async function signUp(req, res) {
     const { id } = await createAccount(email, username, hashedPassword);
     await createUser(id);
 
-    const accessToken = generateAccessToken({ username });
-    const refreshToken = generateRefreshToken({ username });
+    const accessToken = generateAccessToken({ id, username });
+    const refreshToken = generateRefreshToken({ id, username });
     await createRefreshToken(refreshToken);
 
     await res.status(200).json({ accessToken, refreshToken });
@@ -108,9 +109,9 @@ async function signIn(req, res) {
           "The email address or password is incorrect, please try again.",
       });
     }
-    const { username } = user;
-    const accessToken = generateAccessToken({ username });
-    const refreshToken = generateRefreshToken({ username });
+    const { id, username } = user;
+    const accessToken = generateAccessToken({ id, username });
+    const refreshToken = generateRefreshToken({ id, username });
     await createRefreshToken(refreshToken);
 
     res.status(200).send({ accessToken, refreshToken });
@@ -206,15 +207,35 @@ async function forgotPassword(req, res) {
   }
 }
 
-async function deleteUserCredentials(req, res) {
-  const { id } = req.params;
-  if (!id)
+async function changePassword(req, res) {
+  const { newPassword } = req.body;
+  const { id } = req.user;
+  
+  try {
+    const hashedNewPassword = hashSync(newPassword, 10);
+    await changePasswordFromAuthService(id, hashedNewPassword);
     return res
-      .status(400)
-      .send({ message: "User id is not provided, please provide user id." });
+      .status(200)
+      .send({ success: true, message: "Password is changed successfully." });
+  } catch (err) {
+    res.sendStatus(500);
+    console.log(err);
+  }
+}
+
+async function deleteUserCredentials(req, res) {
+  const { refreshToken, id } = req.body;
+
   try {
     await deleteAccount(id);
+    await deleteRefreshToken(refreshToken);
+    res.status(200).send({ success: true });
   } catch (err) {
+    res.status(500).send({
+      success: false,
+      message:
+        "An error occurred while trying to delete account or refresh token.",
+    });
     console.log(err);
   }
 }
@@ -225,6 +246,7 @@ module.exports = {
   signOut,
   forgotPassword,
   resetPassword,
+  changePassword,
   generateNewTokens,
   deleteUserCredentials,
 };

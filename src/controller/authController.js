@@ -2,11 +2,13 @@ const { hashSync, compareSync } = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
 const { createUser } = require("@core/lib/services/UserService");
 const {
-  changePassword: changePasswordFromAuthService,
+  changePassword: changePasswordByAuthService,
   createAccount,
   isEmailExist,
   findUserByEmail,
   deleteAccount,
+  updateProfile: updateProfileByAuthService,
+  findUserByUsername,
 } = require("@core/lib/services/AuthService");
 const {
   createRefreshToken,
@@ -23,7 +25,7 @@ const { sendPasswordResetLink } = require("../utils");
 
 const generateAccessToken = (data) => {
   return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
-    expiresIn: "15m",
+    expiresIn: "500h",
   });
 };
 
@@ -114,7 +116,7 @@ async function signIn(req, res) {
     const refreshToken = generateRefreshToken({ id, username });
     await createRefreshToken(refreshToken);
 
-    res.status(200).send({ accessToken, refreshToken });
+    res.send({ accessToken, refreshToken });
   } catch (err) {
     res.sendStatus(500);
     console.log(err);
@@ -196,7 +198,7 @@ async function forgotPassword(req, res) {
     };
     await createPasswordResetRequest(request);
     await sendPasswordResetLink(email, id);
-    res.status(200).send({
+    res.send({
       success: true,
       message: "Password reset link is sent successfully.",
       data: { email },
@@ -210,13 +212,14 @@ async function forgotPassword(req, res) {
 async function changePassword(req, res) {
   const { newPassword } = req.body;
   const { id } = req.user;
-  
+
   try {
     const hashedNewPassword = hashSync(newPassword, 10);
-    await changePasswordFromAuthService(id, hashedNewPassword);
-    return res
-      .status(200)
-      .send({ success: true, message: "Password is changed successfully." });
+    await changePasswordByAuthService(id, hashedNewPassword);
+    return res.send({
+      success: true,
+      message: "Password is changed successfully.",
+    });
   } catch (err) {
     res.sendStatus(500);
     console.log(err);
@@ -229,13 +232,47 @@ async function deleteUserCredentials(req, res) {
   try {
     await deleteAccount(id);
     await deleteRefreshToken(refreshToken);
-    res.status(200).send({ success: true });
+    res.send({ success: true });
   } catch (err) {
     res.status(500).send({
       success: false,
       message:
         "An error occurred while trying to delete account or refresh token.",
     });
+    console.log(err);
+  }
+}
+
+async function updateProfile(req, res) {
+  const { username, email } = req.body;
+  const { id } = req.user;
+  try {
+    let user = null;
+
+    user = await findUserByEmail(email);
+
+    if (user && id !== user.id) {
+      return res
+        .status(404)
+        .send({ success: false, message: "Email already exists!" });
+    }
+
+    user = await findUserByUsername(username);
+
+    if (user && id !== user.id) {
+      return res
+        .status(404)
+        .send({ success: false, message: "Username already exists!" });
+    }
+
+    await updateProfileByAuthService(id, email, username);
+    res.send({
+      success: true,
+      message: "Your profile is updated successfully.",
+      data: { username, email },
+    });
+  } catch (err) {
+    res.sendStatus(500);
     console.log(err);
   }
 }
@@ -249,4 +286,5 @@ module.exports = {
   changePassword,
   generateNewTokens,
   deleteUserCredentials,
+  updateProfile,
 };

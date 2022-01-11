@@ -6,6 +6,7 @@ const {
   resetPasswordSchema,
   deleteAccountSchema,
   changePasswordSchema,
+  updateProfileSchema
 } = require("@core/lib/validations/authValidation");
 const {
   signIn,
@@ -16,11 +17,12 @@ const {
   resetPassword,
   changePassword,
   deleteUserCredentials,
+  updateProfile,
 } = require("../controller/authController");
 const {
   validateCredentials,
   validateValues,
-  authenticateToken
+  authenticateToken,
 } = require("@core/lib/middleware/");
 
 router.post("/signup", validateValues(signUpSchema), signUp);
@@ -50,6 +52,13 @@ router.patch(
   authenticateToken,
   validateCredentials,
   changePassword
+);
+
+router.patch(
+  "/update-profile",
+  validateValues(updateProfileSchema),
+  authenticateToken,
+  updateProfile
 );
 
 router.post("/token", generateNewTokens);

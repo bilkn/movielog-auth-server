@@ -6,7 +6,7 @@ const rateLimit = require("express-rate-limit");
 const { AuthRouter } = require("./routes");
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 15,
+  max: 1000,
 });
 
 const PORT = process.env.PORT || 8000;

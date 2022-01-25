@@ -58,6 +58,7 @@ router.patch(
   "/update-profile",
   validateValues(updateProfileSchema),
   authenticateToken,
+  validateCredentials,
   updateProfile
 );
 

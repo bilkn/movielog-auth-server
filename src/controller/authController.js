@@ -71,10 +71,9 @@ async function signUp(req, res) {
 
   try {
     if (await isEmailExist(email)) {
-      return res.status(403).send({
-        success: false,
-        message: "That email address is already in use.",
-      });
+      return res
+        .status(403)
+        .send({ email: "That email address is already in use." });
     }
     const [username] = email.split("@");
     const hashedPassword = hashSync(password, 10);
@@ -98,17 +97,14 @@ async function signIn(req, res) {
   try {
     const user = await findUserByEmail(email);
     if (!user) {
-      return res.status(403).send({
-        success: false,
-        message: "The email address or password is incorrect, please try again",
+      return res.status(401).send({
+        email: "The email address or password is incorrect, please try again",
       });
     }
 
     if (!compareSync(password, user.password)) {
       return res.status(401).send({
-        success: false,
-        message:
-          "The email address or password is incorrect, please try again.",
+        email: "The email address or password is incorrect, please try again.",
       });
     }
     const { id, username } = user;
@@ -161,7 +157,7 @@ async function resetPassword(req, res) {
     if (!user) {
       return res
         .status(404)
-        .send({ message: "No user is found with this email." });
+        .send({ email: "No user is found with this email." });
     }
 
     const hashedPassword = hashSync(password, 10);
@@ -190,7 +186,7 @@ async function forgotPassword(req, res) {
     if (!user)
       return res
         .status(404)
-        .send({ success: false, message: "No user is found with this email." });
+        .send({ email: "No user is found with this email." });
     const id = uuidv4();
     const request = {
       id,
@@ -253,16 +249,16 @@ async function updateProfile(req, res) {
 
     if (user && id !== user.id) {
       return res
-        .status(404)
-        .send({ success: false, message: "Email already exists!" });
+        .status(409)
+        .send({ email: "A user with this email already exists." });
     }
 
     user = await findUserByUsername(username);
 
     if (user && id !== user.id) {
-      return res
-        .status(404)
-        .send({ success: false, message: "Username already exists!" });
+      return res.status(409).send({
+        username: "A user with this username already exists.",
+      });
     }
 
     await updateProfileByAuthService(id, email, username);

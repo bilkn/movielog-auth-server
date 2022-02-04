@@ -25,7 +25,8 @@ const { sendPasswordResetLink } = require("../utils");
 
 const generateAccessToken = (data) => {
   return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
-    expiresIn: "500h",
+    // TODO: Change expiration duration.
+    expiresIn: "1m",
   });
 };
 
@@ -37,7 +38,9 @@ const generateRefreshToken = (data) => {
 
 async function generateNewTokens(req, res) {
   const { token: refreshToken } = req.body;
+
   if (!refreshToken) return res.sendStatus(401);
+  console.log("TOKEN REQUEST", refreshToken);
   try {
     if (!(await isRefreshTokenExist(refreshToken))) {
       return res
@@ -72,7 +75,7 @@ async function signUp(req, res) {
   try {
     if (await isEmailExist(email)) {
       return res
-        .status(403)
+        .status(409)
         .send({ email: "That email address is already in use." });
     }
     const [username] = email.split("@");
@@ -179,14 +182,18 @@ async function forgotPassword(req, res) {
   const { email } = req.body;
   try {
     const user = await findUserByEmail(email);
-    if (!email)
+    if (!email) {
       return res
         .status(400)
         .send({ message: "Email is not provided, please provide email." });
-    if (!user)
+    }
+
+    if (!user) {
       return res
         .status(404)
         .send({ email: "No user is found with this email." });
+    }
+
     const id = uuidv4();
     const request = {
       id,
@@ -194,6 +201,7 @@ async function forgotPassword(req, res) {
     };
     await createPasswordResetRequest(request);
     await sendPasswordResetLink(email, id);
+
     res.send({
       success: true,
       message: "Password reset link is sent successfully.",

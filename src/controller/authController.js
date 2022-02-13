@@ -22,19 +22,7 @@ const {
 } = require("../service/PasswordResetService");
 const jwt = require("jsonwebtoken");
 const { sendPasswordResetLink } = require("../utils");
-
-const generateAccessToken = (data) => {
-  return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
-    // TODO: Change expiration duration.
-    expiresIn: "1m",
-  });
-};
-
-const generateRefreshToken = (data) => {
-  return jwt.sign(data, process.env.REFRESH_TOKEN_PRIVATE_KEY, {
-    expiresIn: `${24 * 90}h`,
-  });
-};
+const { generateAccessToken, generateRefreshToken } = require("../helpers");
 
 async function generateNewTokens(req, res) {
   const { token: refreshToken } = req.body;
@@ -270,10 +258,21 @@ async function updateProfile(req, res) {
     }
 
     await updateProfileByAuthService(id, email, username);
+    const accessToken = generateAccessToken({ id, username });
+    const refreshToken = generateRefreshToken({ id, username });
+    await createRefreshToken(refreshToken);
+
     res.send({
       success: true,
       message: "Your profile is updated successfully.",
-      data: { username, email },
+      data: {
+        username,
+        email,
+        tokens: {
+          accessToken,
+          refreshToken,
+        },
+      },
     });
   } catch (err) {
     res.sendStatus(500);

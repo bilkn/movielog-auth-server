@@ -22,21 +22,11 @@ const {
 } = require("../service/PasswordResetService");
 const jwt = require("jsonwebtoken");
 const { sendPasswordResetLink } = require("../utils");
-
-const generateAccessToken = (data) => {
-  return jwt.sign(data, process.env.ACCESS_TOKEN_PRIVATE_KEY, {
-    expiresIn: "500h",
-  });
-};
-
-const generateRefreshToken = (data) => {
-  return jwt.sign(data, process.env.REFRESH_TOKEN_PRIVATE_KEY, {
-    expiresIn: `${24 * 90}h`,
-  });
-};
+const { generateAccessToken, generateRefreshToken } = require("../helpers");
 
 async function generateNewTokens(req, res) {
   const { token: refreshToken } = req.body;
+
   if (!refreshToken) return res.sendStatus(401);
   try {
     if (!(await isRefreshTokenExist(refreshToken))) {
@@ -48,7 +38,19 @@ async function generateNewTokens(req, res) {
       refreshToken,
       process.env.REFRESH_TOKEN_PRIVATE_KEY,
       async (err, user) => {
-        if (err) return res.status(403).send({ success: false, message: err });
+        if (err) {
+          if (err.name === "TokenExpiredError")
+            return res.status(403).send({
+              success: false,
+              message: "Your session has expired.",
+              refreshTokenExpired: true,
+            });
+
+          return res.status(403).send({
+            success: false,
+            message: err,
+          });
+        }
 
         await deleteRefreshToken(refreshToken);
 
@@ -61,7 +63,7 @@ async function generateNewTokens(req, res) {
       }
     );
   } catch (err) {
-    res.status(500);
+    res.sendStatus(500);
     console.log(err);
   }
 }
@@ -72,7 +74,7 @@ async function signUp(req, res) {
   try {
     if (await isEmailExist(email)) {
       return res
-        .status(403)
+        .status(409)
         .send({ email: "That email address is already in use." });
     }
     const [username] = email.split("@");
@@ -179,14 +181,18 @@ async function forgotPassword(req, res) {
   const { email } = req.body;
   try {
     const user = await findUserByEmail(email);
-    if (!email)
+    if (!email) {
       return res
         .status(400)
         .send({ message: "Email is not provided, please provide email." });
-    if (!user)
+    }
+
+    if (!user) {
       return res
         .status(404)
         .send({ email: "No user is found with this email." });
+    }
+
     const id = uuidv4();
     const request = {
       id,
@@ -194,6 +200,7 @@ async function forgotPassword(req, res) {
     };
     await createPasswordResetRequest(request);
     await sendPasswordResetLink(email, id);
+
     res.send({
       success: true,
       message: "Password reset link is sent successfully.",
@@ -262,10 +269,21 @@ async function updateProfile(req, res) {
     }
 
     await updateProfileByAuthService(id, email, username);
+    const accessToken = generateAccessToken({ id, username });
+    const refreshToken = generateRefreshToken({ id, username });
+    await createRefreshToken(refreshToken);
+
     res.send({
       success: true,
       message: "Your profile is updated successfully.",
-      data: { username, email },
+      data: {
+        username,
+        email,
+        tokens: {
+          accessToken,
+          refreshToken,
+        },
+      },
     });
   } catch (err) {
     res.sendStatus(500);

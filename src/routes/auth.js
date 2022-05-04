@@ -6,7 +6,8 @@ const {
   resetPasswordSchema,
   deleteAccountSchema,
   changePasswordSchema,
-  updateProfileSchema
+  updateProfileSchema,
+  forgotPasswordSchema,
 } = require("@core/lib/validations/authValidation");
 const {
   signIn,
@@ -38,7 +39,11 @@ router.delete(
   deleteUserCredentials
 );
 
-router.post("/forgot-password", forgotPassword);
+router.post(
+  "/forgot-password",
+  validateValues(forgotPasswordSchema),
+  forgotPassword
+);
 
 router.patch(
   "/reset-password",

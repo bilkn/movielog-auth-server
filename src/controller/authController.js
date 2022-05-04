@@ -28,7 +28,6 @@ async function generateNewTokens(req, res) {
   const { token: refreshToken } = req.body;
 
   if (!refreshToken) return res.sendStatus(401);
-  console.log("TOKEN REQUEST", refreshToken);
   try {
     if (!(await isRefreshTokenExist(refreshToken))) {
       return res
@@ -39,7 +38,19 @@ async function generateNewTokens(req, res) {
       refreshToken,
       process.env.REFRESH_TOKEN_PRIVATE_KEY,
       async (err, user) => {
-        if (err) return res.status(403).send({ success: false, message: err });
+        if (err) {
+          if (err.name === "TokenExpiredError")
+            return res.status(403).send({
+              success: false,
+              message: "Your session has expired.",
+              refreshTokenExpired: true,
+            });
+
+          return res.status(403).send({
+            success: false,
+            message: err,
+          });
+        }
 
         await deleteRefreshToken(refreshToken);
 
@@ -52,7 +63,7 @@ async function generateNewTokens(req, res) {
       }
     );
   } catch (err) {
-    res.status(500);
+    res.sendStatus(500);
     console.log(err);
   }
 }

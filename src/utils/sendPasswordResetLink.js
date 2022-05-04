@@ -2,22 +2,24 @@ const nodemailer = require("nodemailer");
 
 async function SendPasswordResetLink(email, id) {
   const transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
+    name: "mail.privateemail.com",
+    host: "mail.privateemail.com",
+    port: 465,
+    secure: true,
     auth: {
-      user: "brionna.toy2@ethereal.email",
-      pass: "RaP8qj8Eus4jV7VTm9",
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
     },
   });
 
   const msg = {
-    from: "auth@movielog.com",
+    from: "support@movielog.xyz",
     to: email,
     subject: "Reset password",
     text: "",
     html: `<b>Password reset id: ${id}</b>` /* !!! Change this to a link. */,
   };
-
+  
   const info = await transporter.sendMail(msg);
 
   console.log("Message sent: %s", info.messageId);

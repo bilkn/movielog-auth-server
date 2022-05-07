@@ -1,4 +1,6 @@
 require("dotenv").config();
+const Mongoose = require("@core/lib/helpers/mongodb-connect");
+global.Mongoose = Mongoose
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -9,7 +11,7 @@ const limiter = rateLimit({
   max: 1000,
 });
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 9000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

@@ -1,6 +1,4 @@
-const mongoose = require("@core/lib/helpers/mongodb-connect");
-
-const PasswordResetRequestSchema = new mongoose.Schema({
+const PasswordResetRequestSchema = new Mongoose.Schema({
   id: {
     type: String,
     required: true,
@@ -11,7 +9,7 @@ const PasswordResetRequestSchema = new mongoose.Schema({
   },
 });
 
-const PasswordResetRequestModel = mongoose.model(
+const PasswordResetRequestModel = Mongoose.model(
   "PasswordRequest",
   PasswordResetRequestSchema
 );

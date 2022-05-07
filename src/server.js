@@ -1,5 +1,6 @@
 require("dotenv").config();
-
+const Mongoose = require("@core/lib/helpers/mongodb-connect");
+global.Mongoose = Mongoose
 const express = require("express");
 const app = express();
 const cors = require("cors");

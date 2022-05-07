@@ -1,6 +1,4 @@
-const mongoose = require("@core/lib/helpers/mongodb-connect");
-
-const RefreshTokenSchema = new mongoose.Schema({
+const RefreshTokenSchema = new Mongoose.Schema({
   token: String,
   blacklisted: {
     type: Boolean,
@@ -8,6 +6,6 @@ const RefreshTokenSchema = new mongoose.Schema({
   },
 });
 
-const RefreshTokenModel = mongoose.model("RefreshToken", RefreshTokenSchema);
+const RefreshTokenModel = Mongoose.model("RefreshToken", RefreshTokenSchema);
 
 module.exports = RefreshTokenModel;
